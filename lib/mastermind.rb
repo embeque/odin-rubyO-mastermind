@@ -7,26 +7,69 @@ class Game
   attr_accessor :colors, :digits, :tries
   attr_reader :answer
 
-  def initialize(defaults: { colors: 5, digits: 4, tries: 12 }, ask: false)
-    ask_defaults if ask == true
+  def initialize
+    self.colors = 5
+    self.digits = 4
+    self.tries = 12
 
-    self.colors = defaults[:colors]
-    self.digits = defaults[:digits]
-    self.tries = defaults[:tries]
+    # play
   end
 
-  def play(code = random_answer, solve: false, debug: false)
-    puts "Game Started\n" if debug
-    info if debug
-    @answer = correct(code)
-    if solve == true
-      puts "started searching for code #{answer}" if debug
-      computer_solve(debug: debug)
+  def get_input(message)
+    puts message
+    gets.chomp
+  end
+
+  # remove computer solve and human solve functionality, make one game pipeline only
+  def play
+    give_code = get_input "\nDo you have someone to Enter the code ? (yes/no) - if 'no' random code will be selected"
+    if give_code == 'yes'
+
+      puts 'Okay, now pass the device to the someone (so he can enter the code)'
+      puts 'Don\t dare to look at the code or continue yourself'
+      puts nil
+      puts 'If the device has been passed to someone, hit \'RETURN\' to continue'
+      gets
+      system 'clear' # works only on Linux
+
+      puts "\nOkay ..."
+      puts 'You can Enter the code keeping in view these condition:'
+      puts "  1. for each digit, you can select between numbers 0 - #{colors}"
+      puts "  2. number of digits of the code must be #{digits}"
+
+      new_code = get_input("\nnow, enter the number according to these conditions, otherwise the game will restart !!!").to_i
+      if valid? new_code
+        @answer = new_code
+      else
+        system 'clear'
+        puts 'Wrong code entered. do it all again !!!'
+        play
+        return
+      end
+    else
+      @answer = random_correct_answer
+    end
+    system 'clear'
+    play_started
+  end
+
+  def play_started
+    puts "Game Started\n"
+    info
+    solve = get_input "\nDo you want to computer to solve the problem instead of you (yes/no)"
+    if solve.downcase == 'yes'
+      puts "started searching for code #{answer}"
+      computer_solve
     else
       human_solve
-      # for_computer = Game.new(defaults: { colors: colors, digits: digits, tries: tries })
-      # for_computer.play(answer, solve: true, debug: false)
-      # puts "\n\nYou Solved the code in #{get_elapsed_tries} and computer solved it in #{for_computer.get_elapsed_tries}\n"
+    end
+  end
+
+  def valid?(code)
+    if code.digits.length == digits && correct(code) == code
+      true
+    else
+      false
     end
   end
 
@@ -59,7 +102,7 @@ class Game
     guess
   end
 
-  def computer_solve(set: universal_set, guess: 1122, debug: false)
+  def computer_solve(set: universal_set, guess: 1122)
     result = nil
     loop do
       groups = Hash.new { |hash, key| hash[key] = [] }
@@ -68,18 +111,18 @@ class Game
         groups[score.to_s.to_sym].append code
       end
 
-      actual_score = evaluate(guess, debug: debug)
+      actual_score = evaluate(guess)
       if actual_score.nil?
-        puts 'Game End' if debug
+        puts 'Game End'
         break
       end
       set = groups[actual_score.to_s.to_sym]
 
       if set.length <= 1
         result = set[0]
-        puts "\n---------------------------------------------" if debug
-        puts "Answer Found: #{result} after #{get_elapsed_tries} tries." if debug
-        puts "---------------------------------------------\n" if debug
+        puts "\n---------------------------------------------"
+        puts "Answer Found: #{result} after #{get_elapsed_tries} tries."
+        puts "---------------------------------------------\n"
         break
       end
 
@@ -91,22 +134,8 @@ class Game
     result
   end
 
-  def ask_defaults
-    print 'How many colors do you want?  : '
-    (self.colors = gets.chomp.to_i) until colors.is_a? Integer
-    puts nil, nil
-
-    print 'How many digits you wnat? - (More digits higher the difficulty more time it will take to solve)\n'
-    (self.digits = gets.chomp.to_i) until digits.is_a? Integer
-    puts nil, nil
-
-    print 'How many tries you want should take to solve this problem?  : '
-    (self.tries = gets.chomp.to_i) until tries.is_a? Integer
-    puts nil, nil
-  end
-
-  def random_answer
-    rand(0..max_value)
+  def random_correct_answer
+    correct(rand(0..max_value))
   end
 
   def info
@@ -119,18 +148,18 @@ class Game
     12 - tries
   end
 
-  def evaluate(guess, debug: true)
+  def evaluate(guess)
     # returns the score if uses the tries and nil if there is no tries left
     if tries.positive?
       result = find_score(guess, answer)
       self.tries = tries - 1
-      puts "Try: #{get_elapsed_tries}, Guess #{guess} score: #{result[0]} Red Pegs, #{result[1]} White Pegs" if debug
-      puts "Remaining Tries #{tries}" if debug
-      puts nil if debug
+      puts "Try: #{get_elapsed_tries}, Guess #{guess} score: #{result[0]} Red Pegs, #{result[1]} White Pegs"
+      puts "Remaining Tries #{tries}"
+      puts nil
       result
     else
       # you don't have tries left
-      puts 'You don\'t have any tries left!!! Try again by relaunching the game' if debug
+      puts 'You don\'t have any tries left!!! Try again by relaunching the game'
       nil
     end
   end

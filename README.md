@@ -5,11 +5,5 @@ It’s a game where you have to guess your opponent’s secret code within a cer
 - creating groups of same red and white pegs
 - deleting those groups depending upon response  
 
-# Human Mode (default)  
-- use debug flag  
-and human solving mode is active  
-
-# Computer Mode
-- use debug flag
-- use solve flag
-
+Game Pipeline  
+It will ask you about every thing that it can do.
